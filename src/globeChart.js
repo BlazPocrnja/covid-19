@@ -11,10 +11,10 @@ am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_spiritedaway);
 
 const GlobeChart = (props) => {
-	const { data } = props
+	const { data, onCountryClick } = props
 
 	useEffect(() => {
-		let chart = am4core.create("chartdiv", am4maps.MapChart);
+		let chart = am4core.create("globechartdiv", am4maps.MapChart);
 
 		try {
 				chart.geodata = am4geodata_worldLow;
@@ -25,7 +25,7 @@ const GlobeChart = (props) => {
 
 
 		let label = chart.createChild(am4core.Label)
-		label.text = "12 months (3/7/2019 data) rolling measles\nincidence per 1'000'000 total population. \n Bullet size uses logarithmic scale.";
+		label.text = "Select a country to view statistics.";
 		label.fontSize = 12;
 		label.align = "left";
 		label.valign = "bottom"
@@ -134,7 +134,7 @@ const GlobeChart = (props) => {
 			}
 		})
 		template.events.on("hit", function (event) {
-			console.log("hello")
+			onCountryClick(event.target.dataItem.dataContext.name)
 		})
 
 		let hs = polygonSeries.mapPolygons.template.states.create("hover");
@@ -197,7 +197,7 @@ const GlobeChart = (props) => {
 	}, [])
 	
 	return (
-		<div id="chartdiv" style={{ width: "100%", height: "100%" }}/>
+		<div id="globechartdiv" style={{ width: "100%", height: "100%" }}/>
 	)
 }
 
