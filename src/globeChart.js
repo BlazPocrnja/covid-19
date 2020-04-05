@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4maps from "@amcharts/amcharts4/maps";
-import am4geodata_continentsLow from "@amcharts/amcharts4-geodata/continentsLow";
 import am4geodata_worldLow from "@amcharts/amcharts4-geodata/worldLow";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_spiritedaway from "@amcharts/amcharts4/themes/spiritedaway";
@@ -81,31 +80,9 @@ const GlobeChart = (props) => {
 		chart.deltaLatitude = -20;
 
 		// limits vertical rotation
-		chart.adapter.add("deltaLatitude", function(delatLatitude){
-				return am4core.math.fitToRange(delatLatitude, -90, 90);
+		chart.adapter.add("deltaLatitude", function(deltaLatitude){
+				return am4core.math.fitToRange(deltaLatitude, -90, 90);
 		})
-
-		// Create map polygon series
-
-		let shadowPolygonSeries = chart.series.push(new am4maps.MapPolygonSeries());
-		shadowPolygonSeries.geodata = am4geodata_continentsLow;
-
-		try {
-				shadowPolygonSeries.geodata = am4geodata_continentsLow;
-		}
-		catch (e) {
-				shadowPolygonSeries.raiseCriticalError(new Error("Map geodata could not be loaded. Please download the latest <a href=\"https://www.amcharts.com/download/download-v4/\">amcharts geodata</a> and extract its contents into the same directory as your amCharts files."));
-		}
-
-		shadowPolygonSeries.useGeodata = true;
-		shadowPolygonSeries.dx = 2;
-		shadowPolygonSeries.dy = 2;
-		shadowPolygonSeries.mapPolygons.template.fill = am4core.color("#000");
-		shadowPolygonSeries.mapPolygons.template.fillOpacity = 0.2;
-		shadowPolygonSeries.mapPolygons.template.strokeOpacity = 0;
-		shadowPolygonSeries.fillOpacity = 0.1;
-		shadowPolygonSeries.fill = am4core.color("#000");
-
 
 		// Create map polygon series
 		let polygonSeries = chart.series.push(new am4maps.MapPolygonSeries());
@@ -163,8 +140,9 @@ const GlobeChart = (props) => {
 		covidTemplate.strokeOpacity = 0;
 		covidTemplate.fillOpacity = 0.75;
 		covidTemplate.tooltipPosition = "fixed";
-
-
+		covidTemplate.events.on("hit", function (event) {
+			onCountryClick(event.target.tooltipText.split(":")[0])
+		})
 
 		let hs2 = covidSeries.mapPolygons.template.states.create("hover");
 		hs2.properties.fillOpacity = 1;
@@ -180,8 +158,7 @@ const GlobeChart = (props) => {
 				let count = 0
 				let country = data[mapPolygon.dataItem.dataContext.name]
 				if (country && country.length) count = country[country.length - 1].confirmed;
-				
-
+			
 				if (count > 0) {
 					let polygon = covidSeriesState.mapPolygons.create();
 					polygon.multiPolygon = am4maps.getCircle(mapPolygon.visualLongitude, mapPolygon.visualLatitude, Math.max(0.2, Math.log(count) * Math.LN10 / 10));

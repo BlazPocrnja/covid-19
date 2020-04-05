@@ -4,16 +4,16 @@ import { Layout, Table, Input, Button, Modal } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 import GlobeChart from './globeChart';
-import LineChart from './lineChart';
+import GrowthLineChart from './growthLineChart';
 
 const { Content, Sider } = Layout;
 
 function App() {
   const [data, setData] = useState({})
   const [tableData, setTableData] = useState([])
+  const [growthData, setGrowthData] = useState([])
   const [selectedCountry, setSelectedCountry] = useState("")
   const [searchText, setSearchText] = useState("")
-  const [modalVisible, setModalVisible] = useState(false)
 
   useEffect(() => {
     fetch("https://pomber.github.io/covid19/timeseries.json")
@@ -47,7 +47,20 @@ function App() {
   }, [data])
 
   useEffect(() => {
-    if (selectedCountry !== "") setModalVisible(!modalVisible)
+    if (selectedCountry !== "") {
+      const growthData = []
+      for (let i = 0; i < data[selectedCountry].length; ++i) {
+        if (i >= 2) {
+          let currDate = data[selectedCountry][i].date
+          let prevNewCases = data[selectedCountry][i - 1].confirmed - data[selectedCountry][i - 2].confirmed
+          let currNewCases = data[selectedCountry][i].confirmed - data[selectedCountry][i - 1].confirmed
+          let growthRate = prevNewCases === 0 ? 0 : currNewCases / prevNewCases
+          growthData.push({ date: new Date(currDate).getTime(), value: growthRate })
+        }
+      }
+
+      setGrowthData(growthData)
+    }
   }, [selectedCountry])
 
   const getColumnSearchProps = (dataIndex, placeholder = dataIndex) => {
@@ -147,11 +160,15 @@ function App() {
   return (
     <Layout style={{ height: "100vh", width: "100vw" }}>
       <Content>
-        <Modal 
-          visible={modalVisible}
-          onCancel={() => setModalVisible(false)}
+        <Modal
+          bodyStyle={{ height: "95vh" }}
+          width="95vw"
+          centered
+          visible={selectedCountry !== ""}
+          footer={null}
+          onCancel={() => setSelectedCountry("")}
         >
-          <LineChart data={[{date: "2020/02/02", value: 1}]}/>
+          <GrowthLineChart data={growthData} />
         </Modal>
         <GlobeChart
           data={data}
