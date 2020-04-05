@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4maps from "@amcharts/amcharts4/maps";
@@ -12,6 +12,8 @@ am4core.useTheme(am4themes_spiritedaway);
 
 const GlobeChart = (props) => {
 	const { data, onCountryClick } = props
+	const [polygonSeriesState, setPolygonSeries] = useState()
+	const [covidSeriesState, setCovidSeries] = useState()
 
 	useEffect(() => {
 		let chart = am4core.create("globechartdiv", am4maps.MapChart);
@@ -149,34 +151,39 @@ const GlobeChart = (props) => {
 		graticuleSeries.mapLines.template.stroke = am4core.color("#fff");
 
 
-		let measelsSeries = chart.series.push(new am4maps.MapPolygonSeries())
-		measelsSeries.tooltip.background.fillOpacity = 0;
-		measelsSeries.tooltip.background.cornerRadius = 20;
-		measelsSeries.tooltip.autoTextColor = false;
-		measelsSeries.tooltip.label.fill = am4core.color("#000");
-		measelsSeries.tooltip.dy = -5;
+		let covidSeries = chart.series.push(new am4maps.MapPolygonSeries())
+		covidSeries.tooltip.background.fillOpacity = 0;
+		covidSeries.tooltip.background.cornerRadius = 20;
+		covidSeries.tooltip.autoTextColor = false;
+		covidSeries.tooltip.label.fill = am4core.color("#000");
+		covidSeries.tooltip.dy = -5;
 
-		let measelTemplate = measelsSeries.mapPolygons.template;
-		measelTemplate.fill = am4core.color("#bf7569");
-		measelTemplate.strokeOpacity = 0;
-		measelTemplate.fillOpacity = 0.75;
-		measelTemplate.tooltipPosition = "fixed";
+		let covidTemplate = covidSeries.mapPolygons.template;
+		covidTemplate.fill = am4core.color("#bf7569");
+		covidTemplate.strokeOpacity = 0;
+		covidTemplate.fillOpacity = 0.75;
+		covidTemplate.tooltipPosition = "fixed";
 
 
 
-		let hs2 = measelsSeries.mapPolygons.template.states.create("hover");
+		let hs2 = covidSeries.mapPolygons.template.states.create("hover");
 		hs2.properties.fillOpacity = 1;
 		hs2.properties.fill = am4core.color("#86240c");
 
-		polygonSeries.events.on("inited", function () {
-			polygonSeries.mapPolygons.each(function (mapPolygon) {
+		setPolygonSeries(polygonSeries)
+		setCovidSeries(covidSeries)
+	}, [])
+
+	useEffect(() => {
+		if (polygonSeriesState) {
+			polygonSeriesState.mapPolygons.each(function (mapPolygon) {
 				let count = 0
 				let country = data[mapPolygon.dataItem.dataContext.name]
 				if (country && country.length) count = country[country.length - 1].confirmed;
 				
 
 				if (count > 0) {
-					let polygon = measelsSeries.mapPolygons.create();
+					let polygon = covidSeriesState.mapPolygons.create();
 					polygon.multiPolygon = am4maps.getCircle(mapPolygon.visualLongitude, mapPolygon.visualLatitude, Math.max(0.2, Math.log(count) * Math.LN10 / 10));
 					polygon.tooltipText = mapPolygon.dataItem.dataContext.name + ": " + count;
 					mapPolygon.dummyData = polygon;
@@ -191,10 +198,9 @@ const GlobeChart = (props) => {
 					mapPolygon.tooltipText = mapPolygon.dataItem.dataContext.name + ": no data";
 					mapPolygon.fillOpacity = 0.9;
 				}
-
 			})
-		})
-	}, [])
+		}
+	}, [data])
 	
 	return (
 		<div id="globechartdiv" style={{ width: "100%", height: "100%" }}/>
