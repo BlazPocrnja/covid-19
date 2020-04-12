@@ -5,6 +5,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 import GlobeChart from './globeChart';
 import GrowthLineChart from './growthLineChart';
+import { findLineByLeastSquares } from './myMath';
 
 const { Content, Sider } = Layout;
 
@@ -12,6 +13,7 @@ function App() {
   const [data, setData] = useState({})
   const [tableData, setTableData] = useState([])
   const [growthData, setGrowthData] = useState([])
+  const [growthTrend, setGrowthTrend] = useState([])
   const [selectedCountry, setSelectedCountry] = useState("")
   const [searchText, setSearchText] = useState("")
 
@@ -62,6 +64,19 @@ function App() {
       setGrowthData(growthData)
     }
   }, [selectedCountry])
+
+  const handleBrushChange = ({ startIndex, endIndex }) => {
+    const x_values = []
+    const y_values = []
+    for (let i = startIndex; i <= endIndex; ++i) {
+      x_values.push(growthData[i].date)
+      y_values.push(growthData[i].value)
+    }
+
+    const [results_x, results_y] = findLineByLeastSquares(x_values, y_values)
+    let results = results_y.map((y, i) => ({ value: y, date: x_values[i] }))
+    setGrowthTrend(results)
+  }
 
   const getColumnSearchProps = (dataIndex, placeholder = dataIndex) => {
     let searchInput = undefined
@@ -168,7 +183,11 @@ function App() {
           footer={null}
           onCancel={() => setSelectedCountry("")}
         >
-          <GrowthLineChart data={growthData} />
+          <GrowthLineChart
+            data={growthData}
+            trendLine={growthTrend}
+            handleBrushChange={handleBrushChange}
+          />
         </Modal>
         <GlobeChart
           data={data}
