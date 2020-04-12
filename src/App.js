@@ -6,6 +6,7 @@ import Highlighter from 'react-highlight-words';
 import GlobeChart from './globeChart';
 import GrowthLineChart from './growthLineChart';
 import { findLineByLeastSquares } from './myMath';
+import { debounce } from 'lodash';
 
 const { Content, Sider } = Layout;
 
@@ -65,7 +66,7 @@ function App() {
     }
   }, [selectedCountry])
 
-  const handleBrushChange = ({ startIndex, endIndex }) => {
+  const handleBrushChange = debounce(({ startIndex, endIndex }) => {
     const x_values = []
     const y_values = []
     for (let i = startIndex; i <= endIndex; ++i) {
@@ -76,7 +77,7 @@ function App() {
     const [results_x, results_y] = findLineByLeastSquares(x_values, y_values)
     let results = results_y.map((y, i) => ({ value: y, date: x_values[i] }))
     setGrowthTrend(results)
-  }
+  }, 500)
 
   const getColumnSearchProps = (dataIndex, placeholder = dataIndex) => {
     let searchInput = undefined
