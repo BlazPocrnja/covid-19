@@ -10,12 +10,12 @@ import {
 } from 'recharts';
 
 const ConfirmedAreaChart = (props) => {
-	const { data, predictedData  } = props
+	const { data, estimatedData, yAxisLabel  } = props
 	const [mergedData, setMergedData] = useState([])
 
 	useEffect(() => {
-		setMergedData([...data, ...predictedData])
-	}, [data, predictedData])
+		setMergedData([...data, ...estimatedData])
+	}, [data, estimatedData])
 
   return (
     <ResponsiveContainer>
@@ -41,8 +41,22 @@ const ConfirmedAreaChart = (props) => {
 				<YAxis />
 				<CartesianGrid strokeDasharray="3 3" />
 				<Tooltip labelFormatter={t => new Date(t).toLocaleDateString()} />
-				<Area type="monotone" dataKey="value" stroke="#8884d8" fillOpacity={1} fill="url(#colorUv)" />
-				<Area type="monotone" dataKey="predictedValue" stroke="#82ca9d" fillOpacity={1} fill="url(#colorPv)" />
+				<Area 
+					name="Actual"
+					type="monotone" 
+					dataKey="value" 
+					stroke="#8884d8" 
+					fillOpacity={1} 
+					fill="url(#colorUv)" 
+				/>
+				<Area
+					name="Estimate"
+					type="monotone" 
+					dataKey="estimate" 
+					stroke="#82ca9d" 
+					fillOpacity={1} 
+					fill="url(#colorPv)"
+				/>
 			</AreaChart>
     </ResponsiveContainer>
   );

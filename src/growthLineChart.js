@@ -17,7 +17,7 @@ const GrowthLineChart = (props) => {
   const [mergedData, setMergedData] = useState([])
 
   useEffect(() => {
-    setMergedData(data.map(d => ({ ...d, trend: (trendLine.find(t => t.date === d.date) || { value: undefined }).value })))
+    setMergedData(data.map(d => ({ ...d, estimate: (trendLine.find(t => t.date === d.date) || { value: undefined }).value })))
   }, [data, trendLine])
 
   const onBrushChange = e => {
@@ -43,8 +43,18 @@ const GrowthLineChart = (props) => {
         />
         <CartesianGrid strokeDasharray="3 3" />
         <Tooltip labelFormatter={t => new Date(t).toLocaleDateString()} />
-        <Line type="monotone" dataKey="value" stroke="#8884d8" />
-        <Line type="monotone" dataKey="trend" stroke="#82ca9d" />
+        <Line
+          name="Actual"
+          type="monotone" 
+          dataKey="value" 
+          stroke="#8884d8"
+        />
+        <Line
+          name="Estimate"
+          type="monotone" 
+          dataKey="estimate" 
+          stroke="#82ca9d"
+        />
         <Brush 
           startIndex={startIndex}
           endIndex={endIndex}

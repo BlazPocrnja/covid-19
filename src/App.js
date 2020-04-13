@@ -1,23 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { Layout, Table, Input, Button, Modal } from 'antd';
+import { Layout, Table, Input, Button, Modal, Row, Col, Typography } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 import GlobeChart from './globeChart';
 import GrowthLineChart from './growthLineChart';
 import ConfirmedAreaChart from './confirmedAreaChart';
-import { findLineByLeastSquares, linearRegression } from './myMath';
+import { linearRegression } from './myMath';
 import { debounce } from 'lodash';
 
 const { Content, Sider } = Layout;
+const { Title } = Typography;
 
 function App() {
   const [data, setData] = useState({})
   const [tableData, setTableData] = useState([])
   const [growthData, setGrowthData] = useState([])
   const [growthTrend, setGrowthTrend] = useState([])
-  const [confirmedData, setConfirmedData] = useState([])
-  const [predictedData, setPredictedData] = useState([])
+  const [totalData, setTotalData] = useState([])
+  const [estimatedTotal, setEstimatedTotal] = useState([])
+  const [dailyCases, setDailyCases] = useState([])
+  const [estimatedDailyCases, setEstimatedDailyCases] = useState([])
   const [selectedCountry, setSelectedCountry] = useState("")
   const [searchText, setSearchText] = useState("")
 
@@ -54,22 +57,25 @@ function App() {
 
   useEffect(() => {
     if (selectedCountry !== "") {
-      const confirmedData = []
+      const totalData = []
+      const dailyCases = []
       const growthData = []
       for (let i = 0; i < data[selectedCountry].length; ++i) {
         let currDate = data[selectedCountry][i].date
-        confirmedData.push({ date: new Date(currDate).getTime(), value: data[selectedCountry][i].confirmed })
+        totalData.push({ date: new Date(currDate).getTime(), value: data[selectedCountry][i].confirmed })
 
         if (i >= 2) {
           let prevNewCases = data[selectedCountry][i - 1].confirmed - data[selectedCountry][i - 2].confirmed
           let currNewCases = data[selectedCountry][i].confirmed - data[selectedCountry][i - 1].confirmed
           let growthRate = prevNewCases === 0 ? 0 : currNewCases / prevNewCases
           growthData.push({ date: new Date(currDate).getTime(), value: growthRate })
+          dailyCases.push({ date: new Date(currDate).getTime(), value: currNewCases })
         }
         else growthData.push({ date: new Date(currDate).getTime(), value: 0 })
       }
 
-      setConfirmedData(confirmedData)
+      setTotalData(totalData)
+      setDailyCases(dailyCases)
       setGrowthData(growthData)
     }
   }, [selectedCountry])
@@ -82,15 +88,20 @@ function App() {
       y_values.push(growthData[i].value)
     }
 
-    const [results_x, results_y] = findLineByLeastSquares(x_values, y_values)
-    const results = results_y.map((y, i) => ({ value: y, date: x_values[i] }))
-    setGrowthTrend(results)
-
     const lr = linearRegression(x_values, y_values)
 
-    const predictedData = []
-    const currentDate = new Date();
+    const growthTrend = []
+    for (let i = startIndex; i <= endIndex; ++i) {
+      const estimate = Math.max(lr.slope * growthData[i].date + lr.intercept, 0)
+      growthTrend.push({date: growthData[i].date, value: estimate})
+    }
+
+    setGrowthTrend(growthTrend)
+
+    const estimatedTotal = []
+    const estimatedDailyCases = []
     const selectedData = data[selectedCountry]
+    const currentDate = new Date(selectedData[endIndex].date);
     let newCases = selectedData[endIndex].confirmed - selectedData[endIndex - 1].confirmed
     let totalCases = selectedData[endIndex].confirmed
 
@@ -98,14 +109,16 @@ function App() {
       const nextDate = new Date(currentDate)
       nextDate.setDate(nextDate.getDate() + i)
 
-      const predictedGrowthRate = Math.max(lr.slope * nextDate.getTime() + lr.intercept, 0)
-      newCases = newCases * predictedGrowthRate
+      const estimatedGrowthRate = Math.max(lr.slope * nextDate.getTime() + lr.intercept, 0)
+      newCases = newCases * estimatedGrowthRate
       totalCases += newCases
 
-      predictedData.push({date: nextDate.getTime(), predictedValue: totalCases})
+      estimatedDailyCases.push({ date: nextDate.getTime(), estimate: newCases })
+      estimatedTotal.push({ date: nextDate.getTime(), estimate: totalCases })
     }
 
-    setPredictedData(predictedData)
+    setEstimatedDailyCases(estimatedDailyCases)
+    setEstimatedTotal(estimatedTotal)
   }, 500)
 
   const getColumnSearchProps = (dataIndex, placeholder = dataIndex) => {
@@ -206,22 +219,55 @@ function App() {
     <Layout style={{ height: "100vh", width: "100vw" }}>
       <Content>
         <Modal
-          bodyStyle={{ height: "95vh", overflow: 'scroll' }}
+          bodyStyle={{ height: "95vh", overflow: 'auto' }}
           width="95vw"
           centered
           visible={selectedCountry !== ""}
           footer={null}
           onCancel={() => setSelectedCountry("")}
         >
-          <GrowthLineChart
-            data={growthData}
-            trendLine={growthTrend}
-            handleBrushChange={handleBrushChange}
-          />
-          <ConfirmedAreaChart
-            data={confirmedData}
-            predictedData={predictedData}
-          />
+          <Row style={{ height: "4%" }}>
+            <Col span={24}>
+              <Title level={4} style={{textAlign: "center"}}>
+                Daily Growth Factor
+              </Title>
+            </Col>
+          </Row>
+          <Row style={{ height: "46%" }}>
+            <Col span={24}>
+              <GrowthLineChart
+                data={growthData}
+                trendLine={growthTrend}
+                handleBrushChange={handleBrushChange}
+              />
+            </Col>
+          </Row>
+          <Row style={{ height: "4%" }}>
+            <Col span={12}>
+              <Title level={4} style={{textAlign: "center"}}>
+                Daily Cases
+              </Title>
+            </Col>
+            <Col span={12}>
+              <Title level={4} style={{textAlign: "center"}}>
+                Total Cases
+              </Title>
+            </Col>
+          </Row>
+          <Row style={{ height: "46%" }}>
+            <Col span={12}>
+              <ConfirmedAreaChart
+                data={dailyCases}
+                estimatedData={estimatedDailyCases}
+              />
+            </Col>
+            <Col span={12}>
+              <ConfirmedAreaChart
+                data={totalData}
+                estimatedData={estimatedTotal}
+              />
+            </Col>
+          </Row>
         </Modal>
         <GlobeChart
           data={data}
