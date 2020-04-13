@@ -42,7 +42,7 @@ const GrowthLineChart = (props) => {
           label={{ value: "Growth Rate", angle: -90, position: 'insideLeft' }}
         />
         <CartesianGrid strokeDasharray="3 3" />
-        <Tooltip />
+        <Tooltip labelFormatter={t => new Date(t).toLocaleDateString()} />
         <Line type="monotone" dataKey="value" stroke="#8884d8" />
         <Line type="monotone" dataKey="trend" stroke="#82ca9d" />
         <Brush 

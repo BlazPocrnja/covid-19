@@ -5,7 +5,8 @@ import { SearchOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 import GlobeChart from './globeChart';
 import GrowthLineChart from './growthLineChart';
-import { findLineByLeastSquares } from './myMath';
+import ConfirmedAreaChart from './confirmedAreaChart';
+import { findLineByLeastSquares, linearRegression } from './myMath';
 import { debounce } from 'lodash';
 
 const { Content, Sider } = Layout;
@@ -15,6 +16,8 @@ function App() {
   const [tableData, setTableData] = useState([])
   const [growthData, setGrowthData] = useState([])
   const [growthTrend, setGrowthTrend] = useState([])
+  const [confirmedData, setConfirmedData] = useState([])
+  const [predictedData, setPredictedData] = useState([])
   const [selectedCountry, setSelectedCountry] = useState("")
   const [searchText, setSearchText] = useState("")
 
@@ -51,17 +54,22 @@ function App() {
 
   useEffect(() => {
     if (selectedCountry !== "") {
+      const confirmedData = []
       const growthData = []
       for (let i = 0; i < data[selectedCountry].length; ++i) {
+        let currDate = data[selectedCountry][i].date
+        confirmedData.push({ date: new Date(currDate).getTime(), value: data[selectedCountry][i].confirmed })
+
         if (i >= 2) {
-          let currDate = data[selectedCountry][i].date
           let prevNewCases = data[selectedCountry][i - 1].confirmed - data[selectedCountry][i - 2].confirmed
           let currNewCases = data[selectedCountry][i].confirmed - data[selectedCountry][i - 1].confirmed
           let growthRate = prevNewCases === 0 ? 0 : currNewCases / prevNewCases
           growthData.push({ date: new Date(currDate).getTime(), value: growthRate })
         }
+        else growthData.push({ date: new Date(currDate).getTime(), value: 0 })
       }
 
+      setConfirmedData(confirmedData)
       setGrowthData(growthData)
     }
   }, [selectedCountry])
@@ -75,8 +83,29 @@ function App() {
     }
 
     const [results_x, results_y] = findLineByLeastSquares(x_values, y_values)
-    let results = results_y.map((y, i) => ({ value: y, date: x_values[i] }))
+    const results = results_y.map((y, i) => ({ value: y, date: x_values[i] }))
     setGrowthTrend(results)
+
+    const lr = linearRegression(x_values, y_values)
+
+    const predictedData = []
+    const currentDate = new Date();
+    const selectedData = data[selectedCountry]
+    let newCases = selectedData[endIndex].confirmed - selectedData[endIndex - 1].confirmed
+    let totalCases = selectedData[endIndex].confirmed
+
+    for (let i = 1; i <= 365; ++i) {
+      const nextDate = new Date(currentDate)
+      nextDate.setDate(nextDate.getDate() + i)
+
+      const predictedGrowthRate = Math.max(lr.slope * nextDate.getTime() + lr.intercept, 0)
+      newCases = newCases * predictedGrowthRate
+      totalCases += newCases
+
+      predictedData.push({date: nextDate.getTime(), predictedValue: totalCases})
+    }
+
+    setPredictedData(predictedData)
   }, 500)
 
   const getColumnSearchProps = (dataIndex, placeholder = dataIndex) => {
@@ -177,7 +206,7 @@ function App() {
     <Layout style={{ height: "100vh", width: "100vw" }}>
       <Content>
         <Modal
-          bodyStyle={{ height: "95vh" }}
+          bodyStyle={{ height: "95vh", overflow: 'scroll' }}
           width="95vw"
           centered
           visible={selectedCountry !== ""}
@@ -188,6 +217,10 @@ function App() {
             data={growthData}
             trendLine={growthTrend}
             handleBrushChange={handleBrushChange}
+          />
+          <ConfirmedAreaChart
+            data={confirmedData}
+            predictedData={predictedData}
           />
         </Modal>
         <GlobeChart
