@@ -60,7 +60,7 @@ function App() {
       const totalData = []
       const dailyCases = []
       const growthData = []
-      for (let i = 0; i < data[selectedCountry].length; ++i) {
+      for (let i = 0; i < (data[selectedCountry] || []).length; ++i) {
         let currDate = data[selectedCountry][i].date
         totalData.push({ date: new Date(currDate).getTime(), value: data[selectedCountry][i].confirmed })
 
@@ -283,7 +283,7 @@ function App() {
           columns={columns}
           dataSource={tableData}
           pagination={false}
-          scroll={{ y: "calc(100vh - 87px)" }}
+          scroll={{ y: "calc(100vh - 39px)" }}
           onRow={(record, rowIndex) => {
             return {
               onClick: () => setSelectedCountry(record.country)

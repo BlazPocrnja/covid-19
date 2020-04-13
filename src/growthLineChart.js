@@ -17,7 +17,16 @@ const GrowthLineChart = (props) => {
   const [mergedData, setMergedData] = useState([])
 
   useEffect(() => {
-    setMergedData(data.map(d => ({ ...d, estimate: (trendLine.find(t => t.date === d.date) || { value: undefined }).value })))
+    if (data.length >= 30) {
+      setStartIndex(data.length - 30)
+      setEndIndex(data.length - 1)
+
+      handleBrushChange({startIndex: data.length - 30, endIndex: data.length - 1})
+    }
+  }, [data])
+
+  useEffect(() => {
+    setMergedData(data.map(d => ({ ...d, trend: (trendLine.find(t => t.date === d.date) || { value: undefined }).value })))
   }, [data, trendLine])
 
   const onBrushChange = e => {
@@ -50,12 +59,12 @@ const GrowthLineChart = (props) => {
           stroke="#8884d8"
         />
         <Line
-          name="Estimate"
+          name="Trend"
           type="monotone" 
-          dataKey="estimate" 
+          dataKey="trend" 
           stroke="#82ca9d"
         />
-        <Brush 
+        <Brush
           startIndex={startIndex}
           endIndex={endIndex}
           onChange={onBrushChange}
