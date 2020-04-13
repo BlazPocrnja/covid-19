@@ -30,15 +30,12 @@ const GlobeChart = (props) => {
 		label.fontSize = 12;
 		label.align = "left";
 		label.valign = "bottom"
-		label.fill = am4core.color("#927459");
 		label.background = new am4core.RoundedRectangle()
 		label.background.cornerRadius(10,10,10,10);
 		label.padding(10,10,10,10);
 		label.marginLeft = 30;
 		label.marginBottom = 30;
 		label.background.strokeOpacity = 0.3;
-		label.background.stroke =am4core.color("#927459");
-		label.background.fill = am4core.color("#f9e3ce");
 		label.background.fillOpacity = 0.6;
 
 		let dataSource = chart.createChild(am4core.TextLink)
@@ -48,7 +45,6 @@ const GlobeChart = (props) => {
 		dataSource.valign = "top"
 		dataSource.url = "https://github.com/pomber/covid19"
 		dataSource.urlTarget = "_blank";
-		dataSource.fill = am4core.color("#927459");
 		dataSource.padding(10,10,10,10);
 		dataSource.marginLeft = 30;
 		dataSource.marginTop = 30;
@@ -74,8 +70,8 @@ const GlobeChart = (props) => {
 		homeButton.parent = chart.zoomControl;
 		homeButton.insertBefore(chart.zoomControl.plusButton);
 
-		chart.backgroundSeries.mapPolygons.template.polygon.fill = am4core.color("#bfa58d");
-		chart.backgroundSeries.mapPolygons.template.polygon.fillOpacity = 1;
+		chart.backgroundSeries.mapPolygons.template.polygon.fillOpacity = 0.1;
+		chart.backgroundSeries.mapPolygons.template.polygon.fill = am4core.color("#ffffff");
 		chart.deltaLongitude = 20;
 		chart.deltaLatitude = -20;
 
@@ -89,13 +85,14 @@ const GlobeChart = (props) => {
 		polygonSeries.useGeodata = true;
 
 		polygonSeries.calculateVisualCenter = true;
-		polygonSeries.tooltip.background.fillOpacity = 0.2;
+		polygonSeries.tooltip.background.fill = am4core.color("#47c78a");
+		polygonSeries.tooltip.background.fillOpacity = 0.8;
 		polygonSeries.tooltip.background.cornerRadius = 20;
 
 		let template = polygonSeries.mapPolygons.template;
 		template.nonScalingStroke = true;
-		template.fill = am4core.color("#f9e3ce");
-		template.stroke = am4core.color("#e2c9b0");
+		template.fill = am4core.color("#47c78a");
+		template.stroke = am4core.color("#454a58");
 
 		polygonSeries.calculateVisualCenter = true;
 		template.propertyFields.id = "id";
@@ -118,7 +115,7 @@ const GlobeChart = (props) => {
 
 		let hs = polygonSeries.mapPolygons.template.states.create("hover");
 		hs.properties.fillOpacity = 1;
-		hs.properties.fill = am4core.color("#deb7ad");
+		hs.properties.fill = chart.colors.getIndex(0).brighten(-0.5)
 
 
 		let graticuleSeries = chart.series.push(new am4maps.GraticuleSeries());
@@ -129,7 +126,7 @@ const GlobeChart = (props) => {
 
 
 		let covidSeries = chart.series.push(new am4maps.MapPolygonSeries())
-		covidSeries.tooltip.background.fillOpacity = 0;
+		covidSeries.tooltip.background.fillOpacity = 0.8;
 		covidSeries.tooltip.background.cornerRadius = 20;
 		covidSeries.tooltip.autoTextColor = false;
 		covidSeries.tooltip.label.fill = am4core.color("#000");
@@ -180,7 +177,7 @@ const GlobeChart = (props) => {
 	}, [data])
 	
 	return (
-		<div id="globechartdiv" style={{ width: "100%", height: "100%" }}/>
+		<div id="globechartdiv" style={{ width: "100%", height: "100%", backgroundColor: "#454a58"}}/>
 	)
 }
 
